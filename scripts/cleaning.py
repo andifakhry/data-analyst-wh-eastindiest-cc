@@ -24,7 +24,7 @@ def clean_price_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def clean_date_column(df: pd.DataFrame) -> pd.DataFrame:
     """Ubah kolom Date menjadi datetime (day first)"""
-    df["Date"] = pd.to_datetime(df["Date"], format="%d/%m/%Y", dayfirst=True)
+    df["Date"] = pd.to_datetime(df["Date"],dayfirst=True, errors="coerce")
     return df
 
 
