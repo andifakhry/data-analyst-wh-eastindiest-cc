@@ -1,7 +1,11 @@
 import pandas as pd
 from load_data import load_raw
 from cleaning import clean_order_data
-
+from export_pdf import export_inventory_pdf
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from pathlib import Path
 
 # ================================
 # 1. LOAD DATA
@@ -133,9 +137,19 @@ print("Total pembelian November:", f"Rp {daily_nov.sum():,.0f}".replace(",", "."
 print("Jumlah hari dengan transaksi:", len(daily_nov))
 print("Rata-rata pembelian per hari di November:", f"Rp {avg_daily_nov:,.0f}".replace(",", "."))
 
+#11. Rata-rata pembelian per hari di bulan december
+print("\n=== 11. Rata-rata pembelian per  di bulan december ===")
+df_dec = df[df["Month"] == 12]
 
-#11. Rata-rata pembelian per hari di kategori reguler kitchen
-print("\n=== 11. Rata-rata pembelian kategori reguler kitchen ===")
+daily_dec = df_dec.groupby("Date")["Total"].sum()
+
+avg_daily_dec = daily_dec.mean()
+print("Total pembelian December:", f"Rp {daily_dec.sum():,.0f}".replace(",", "."))
+print("Jumlah hari dengan transaksi:", len(daily_dec))
+print("Rata-rata pembelian per hari di December:", f"Rp {avg_daily_dec:,.0f}".replace(",", "."))
+
+# Rata-rata pembelian per hari di kategori reguler kitchen
+print("\n=== Rata-rata pembelian kategori reguler kitchen ===")
 
 df["Category"] = df["Category"].str.strip().str.lower()
 df_kitchen = df[df["Category"].str.lower() == "reguler kitchen"]
@@ -149,7 +163,8 @@ print("Total pembelian Reguler Kitchen:", f"Rp {daily_kitchen.sum():,.0f}".repla
 print("Jumlah hari dengan transaksi:", len(daily_kitchen))
 print("Rata-rata pembelian per hari di Reguler Kitchen:", f"Rp {avg_daily_kitchen:,.0f}".replace(",", "."))
 
-print("\n=== 12. Rata-rata pembelian kategori staff meals ===")
+# Rata-rata pembelian per hari di kategori staff meals
+print("\n=== Rata-rata pembelian kategori staff meals ===")
 
 df["Category"] = df["Category"].str.strip().str.lower()
 df_staff_meals = df[df["Category"].str.lower() == "staff meals"]
@@ -162,3 +177,39 @@ avg_daily_staff_meals = daily_staff_meals.mean()
 print("Total pembelian Staff Meals:", f"Rp {daily_staff_meals.sum():,.0f}".replace(",", "."))
 print("Jumlah hari dengan transaksi:", len(daily_staff_meals))
 print("Rata-rata pembelian per hari di Staff Meals:", f"Rp {avg_daily_staff_meals:,.0f}".replace(",", "."))
+
+# Pembelian harian di bulan desember
+print("\n=== Pembelian harian di bulan desember ===")
+df_dec = df[df["Month"] == 12]
+daily_dec = df_dec.groupby("Date")["Total"].sum()
+for date, total in daily_dec.items():
+    print(f"{date.date()}: Rp {total:,.0f}".replace(",", "."))#
+
+
+# Pembelian harian di bulan desember kategori reguler kitchen
+print("\n=== Pembelian harian di bulan desember kategori reguler kitchen ===")
+df_dec_kitchen = df_dec[df_dec["Category"].str.lower() == "reguler kitchen"]
+daily_dec_kitchen = df_dec_kitchen.groupby("Date")["Total"].sum()
+for date, total in daily_dec_kitchen.items():
+    print(f"{date.date()}: Rp {total:,.0f}".replace(",", "."))#
+
+
+export_inventory_pdf(
+    supplier_spending=(
+        df.groupby("Supplier")["Total"]
+        .sum()
+        .reset_index()
+    ),
+    monthly_spending=(
+        df.groupby("Month")["Total"]
+        .sum()
+        .reset_index()
+    ),
+    avg_daily_sep=avg_daily_sep,
+    avg_daily_oct=avg_daily_oct,
+    avg_daily_nov=avg_daily_nov,
+    avg_daily_kitchen=avg_daily_kitchen,
+    avg_daily_staff_meals=avg_daily_staff_meals,
+)
+
+print("\nPDF Berhasil dibuat di  {pdf_path}")
